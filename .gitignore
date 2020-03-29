@@ -200,4 +200,4 @@ dmypy.json
 .idea/
 cookies.pickle
 credentials.*
-#secrets.py
+config.py
