@@ -1,7 +1,7 @@
 import time
 from config import *
-from GmailHandler import GmailHandler
-from MessengerHandler import *
+from Code.GmailHandler import GmailHandler
+from Code.MessengerHandler import *
 
 
 gmail_handler = GmailHandler(user_account=user_account, receiver_account=receiver_account)

@@ -201,3 +201,4 @@ dmypy.json
 cookies.pickle
 credentials.*
 config.py
+*.sh

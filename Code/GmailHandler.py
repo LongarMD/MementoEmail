@@ -1,6 +1,8 @@
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 from config import service_account_address
+import os
+import pathlib
 
 
 class GmailHandler:
@@ -15,7 +17,7 @@ class GmailHandler:
 
         credentials = ServiceAccountCredentials.from_p12_keyfile(
             service_account_address,
-            'credentials.p12',
+            os.path.join(pathlib.Path(__file__).parent.absolute(), '../__local__/credentials.p12'),
             'notasecret',
             scopes=['https://mail.google.com/'])
         credentials = credentials.create_delegated(self.user_account)

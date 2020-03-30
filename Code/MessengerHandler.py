@@ -1,7 +1,11 @@
-from os import path
+import base64
+import pathlib
 import pickle
+from os import path
+from bs4 import BeautifulSoup
 from fbchat import Client
 from fbchat.models import *
+
 from config import sender_aliases
 
 fonts = {'mathematical': 120224,
@@ -36,6 +40,7 @@ class MessengerHandler(Client):
     def __init__(self, email, password, thread, thread_type):
         self.email = email
         self.password = password
+        self.cookies_path = path.join(pathlib.Path(__file__).parent.absolute(), '../__local__/cookies.pickle')
 
         session_cookies = self.load_cookies()
         super().__init__(email, password, session_cookies=session_cookies)
@@ -48,16 +53,15 @@ class MessengerHandler(Client):
             self.login(self.email, self.password)
             self.save_cookies()
 
-    @staticmethod
-    def load_cookies():
+    def load_cookies(self):
         cookies = None
-        if path.exists('cookies.pickle'):
-            cookies = pickle.load(open('cookies.pickle', 'rb'))
+        if path.exists(self.cookies_path):
+            cookies = pickle.load(open(self.cookies_path, 'rb'))
         return cookies
 
     def save_cookies(self):
         cookies = self.getSession()
-        pickle.dump(cookies, open('cookies.pickle', 'wb'))
+        pickle.dump(cookies, open(self.cookies_path, 'wb'))
 
     def parse_message(self, message):
         self.check_login()
@@ -74,7 +78,11 @@ class MessengerHandler(Client):
         sender = convert_font(sender, fonts['mathematical_italic'])
         subject = convert_font(get_header('Subject'), fonts['mathematical_bold'])
 
-        snippet = message['snippet'] if len(message['snippet']) < 195 else message['snippet'] + '...'
-        snippet = convert_font(snippet, fonts['mathematical'])
+        html = base64.urlsafe_b64decode(message['payload']['parts'][1]['body']['data']).decode('utf-8')
+        soup = BeautifulSoup(html, "html.parser")
+        contents = soup.find('div', attrs={'dir': 'ltr'}).get_text()
+
+        contents = contents[0:200] + '...' if len(contents) > 200 else contents
+        snippet = convert_font(contents, fonts['mathematical'])
 
         self.send(Message(text=f"Novo sporočilo od {sender} – {subject}\n{snippet}"))
