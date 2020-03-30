@@ -102,6 +102,5 @@ class MessengerHandler(Client):
             paths = [path.abspath(path.join(local_path, f)) for f in listdir(local_path) if path.isfile(path.join(local_path, f))]
             for file in paths:
                 self.sendLocalFiles(file_paths=[file])
-            self.sendLocalFiles(file_paths=paths)
 
             shutil.rmtree(local_path)

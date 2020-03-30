@@ -14,4 +14,4 @@ while True:
         messenger_handler.parse_message(mail)
         print('Finished sending message\n')
 
-    time.sleep(60)
+    time.sleep(30)
