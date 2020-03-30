@@ -1,10 +1,11 @@
 import base64
 import pathlib
 import pickle
-from os import path
+from os import path, listdir
 from bs4 import BeautifulSoup
 from fbchat import Client
 from fbchat.models import *
+import shutil
 
 from config import sender_aliases
 
@@ -63,8 +64,10 @@ class MessengerHandler(Client):
         cookies = self.getSession()
         pickle.dump(cookies, open(self.cookies_path, 'wb'))
 
-    def parse_message(self, message):
+    def parse_message(self, mail):
         self.check_login()
+        message = mail['message']
+        parts = mail['parts']
 
         def get_header(name):
             for header in message['payload']['headers']:
@@ -78,7 +81,7 @@ class MessengerHandler(Client):
         sender = convert_font(sender, fonts['mathematical_italic'])
         subject = convert_font(get_header('Subject'), fonts['mathematical_bold'])
 
-        html = base64.urlsafe_b64decode(message['payload']['parts'][1]['body']['data']).decode('utf-8')
+        html = base64.urlsafe_b64decode(parts['text/html']['body']['data']).decode('utf-8')
         soup = BeautifulSoup(html, "html.parser")
         contents = soup.find('div', attrs={'dir': 'ltr'})
 
@@ -91,3 +94,14 @@ class MessengerHandler(Client):
         snippet = convert_font(snippet, fonts['mathematical'])
 
         self.send(Message(text=f"Novo sporočilo od {sender} – {subject}\n{snippet}"))
+
+        if 'other' in parts:
+            print('\tUploading files')
+
+            local_path = parts['local_path']
+            paths = [path.abspath(path.join(local_path, f)) for f in listdir(local_path) if path.isfile(path.join(local_path, f))]
+            for file in paths:
+                self.sendLocalFiles(file_paths=[file])
+            self.sendLocalFiles(file_paths=paths)
+
+            shutil.rmtree(local_path)
