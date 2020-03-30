@@ -80,9 +80,14 @@ class MessengerHandler(Client):
 
         html = base64.urlsafe_b64decode(message['payload']['parts'][1]['body']['data']).decode('utf-8')
         soup = BeautifulSoup(html, "html.parser")
-        contents = soup.find('div', attrs={'dir': 'ltr'}).get_text()
+        contents = soup.find('div', attrs={'dir': 'ltr'})
 
-        contents = contents[0:200] + '...' if len(contents) > 200 else contents
-        snippet = convert_font(contents, fonts['mathematical'])
+        if contents is not None:  # BeautifulSoup feels like a bit of a hack so we're cautious when using it
+            snippet = contents.get_text()
+            snippet = snippet[0:400] + ' ...' if len(snippet) > 400 else snippet
+        else:
+            snippet = message['snippet'] if len(message['snippet']) < 195 else message['snippet'] + ' ...'
+
+        snippet = convert_font(snippet, fonts['mathematical'])
 
         self.send(Message(text=f"Novo sporočilo od {sender} – {subject}\n{snippet}"))
