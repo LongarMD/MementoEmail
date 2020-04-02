@@ -81,21 +81,26 @@ class MessengerHandler(Client):
         sender = convert_font(sender, fonts['mathematical_italic'])
         subject = convert_font(get_header('Subject'), fonts['mathematical_bold'])
 
-        html = base64.urlsafe_b64decode(parts['text/html']['body']['data']).decode('utf-8')
-        soup = BeautifulSoup(html, "html.parser")
-        contents = soup.find('div', attrs={'dir': 'ltr'})
+        contents = None
+        if parts:
+            html = base64.urlsafe_b64decode(parts['text/html']['body']['data']).decode('utf-8')
+            soup = BeautifulSoup(html, "html.parser")
+            contents = soup.find('div', attrs={'dir': 'ltr'})
 
-        if contents is not None:  # BeautifulSoup feels like a bit of a hack so we're cautious when using it
+        if contents:  # BeautifulSoup feels like a bit of a hack so we're cautious when using it
             snippet = contents.get_text()
-            snippet = snippet[0:400] + ' ...' if len(snippet) > 400 else snippet
+        elif 'body' in message['payload'] and 'data' in message['payload']['body']:
+            snippet = base64.urlsafe_b64decode(message['payload']['body']['data']).decode('utf-8')
         else:
-            snippet = message['snippet'] if len(message['snippet']) < 195 else message['snippet'] + ' ...'
+            snippet = message['snippet']
+        snippet = snippet[0:400] + ' ...' if len(snippet) > 400 else snippet
+
 
         snippet = convert_font(snippet, fonts['mathematical'])
 
         self.send(Message(text=f"Novo sporočilo od {sender} – {subject}\n{snippet}"))
 
-        if 'other' in parts:
+        if parts and 'other' in parts:
             print('\tUploading files')
 
             local_path = parts['local_path']

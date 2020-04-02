@@ -40,8 +40,8 @@ class GmailHandler:
         for msg in messages:
             mail = self.service.users().messages().get(userId=self.user_account, id=msg['id']).execute()
 
-            parts = self.get_parts(mail['payload']['parts'])
-            if 'other' in parts:
+            parts = self.get_parts(mail['payload']['parts']) if 'parts' in mail['payload'] else None
+            if parts and 'other' in parts:
                 path = os.path.join(pathlib.Path(__file__).parent.absolute(), f'../__local__/tmp/{msg["id"]}')
                 path = os.path.abspath(path)
                 if not os.path.exists(path):
